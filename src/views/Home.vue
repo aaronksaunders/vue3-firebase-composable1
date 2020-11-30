@@ -2,58 +2,79 @@
   <ion-page>
     <ion-header :translucent="true">
       <ion-toolbar>
-        <ion-title>Inbox</ion-title>
+        <ion-title>USERS COLLECTION</ion-title>
       </ion-toolbar>
     </ion-header>
-    
-    <ion-content :fullscreen="true">
-      <ion-refresher slot="fixed" @ionRefresh="refresh($event)">
-        <ion-refresher-content></ion-refresher-content>
+
+    <ion-content>
+      <!-- handle error -->
+      <div v-if="error" class="ion-padding">
+        <p>{{ error.message }}</p>
+      </div>
+
+      <!-- handle loading -->
+      <ion-loading :is-open="loading"></ion-loading>
+      <ion-refresher slot="fixed" @ionRefresh="doRefresh($event)">
+        <ion-refresher-content :pulling-icon="chevronDownCircleOutline">
+        </ion-refresher-content>
       </ion-refresher>
-      
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Inbox</ion-title>
-        </ion-toolbar>
-      </ion-header>
-      
       <ion-list>
-        <MessageListItem v-for="message in messages" :key="message.id" :message="message" />
+        <user-list-item v-for="user in users" :key="user.id" :user="user" />
       </ion-list>
     </ion-content>
   </ion-page>
 </template>
 
 <script lang="ts">
-import { IonContent, IonHeader, IonList, IonPage, IonRefresher, IonRefresherContent, IonTitle, IonToolbar } from '@ionic/vue';
-import MessageListItem from '@/components/MessageListItem.vue';
-import { defineComponent } from 'vue';
-import { getMessages } from '@/data/messages';
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  IonRefresher,
+  IonRefresherContent,
+  IonList,
+  IonLoading
+} from "@ionic/vue";
+import { chevronDownCircleOutline } from "ionicons/icons";
+
+import UserListItem from "@/components/UserListItem.vue";
+import { defineComponent } from "vue";
+
+// firebase service
+import firebaseService from "../firebase-service";
 
 export default defineComponent({
-  name: 'Home',
-  data() {
+  name: "Home",
+  setup() {
+    const { users, error, loading, loadUsers } = firebaseService();
+
+    const doRefresh = async (event: CustomEvent) => {
+      await loadUsers();
+      (event?.target as any)?.complete();
+    };
+
     return {
-      messages: getMessages()
-    }
-  },
-  methods: {
-    refresh: (ev: CustomEvent) => {
-      setTimeout(() => {
-        ev.detail.complete();
-      }, 3000);
-    }
+      users,
+      error,
+      loading,
+
+      doRefresh,
+      chevronDownCircleOutline
+    };
   },
   components: {
     IonContent,
     IonHeader,
-    IonList,
     IonPage,
-    IonRefresher,
-    IonRefresherContent,
     IonTitle,
     IonToolbar,
-    MessageListItem
-  },
+    UserListItem,
+    IonRefresher,
+    IonRefresherContent,
+    IonList,
+    IonLoading
+  }
 });
 </script>
